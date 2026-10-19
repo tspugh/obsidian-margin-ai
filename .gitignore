@@ -1,0 +1,47 @@
+# Dependencies and generated bundles
+node_modules/
+main.js
+main.js.map
+*.map
+coverage/
+output/
+outputs/
+dist/
+
+# Local Obsidian state, test vaults, and user data
+.obsidian/
+test-vault/
+data.json
+**/data.json
+Margin Profile.md
+**/Margin Profile.md
+*.before-margin-ai-*.pdf
+PDF backups/
+**/PDF backups/
+backups/
+profiles/
+
+# Credentials and environment files
+.env
+.env.*
+!.env.example
+*credential*
+*credentials*
+*.pem
+*.key
+
+# Private development context and local plans
+AGENTS.md
+USER-REQUIREMENTS.md
+MVP-SPEC.md
+docs/plans/
+.agents/
+.codex/
+*.local
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+

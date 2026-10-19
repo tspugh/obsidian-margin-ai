@@ -1,0 +1,977 @@
+/* @settings
+
+name: PDF++
+id: pdf-plus
+settings:
+    - 
+        id: pdf-highlight
+        title: Highlights
+        type: heading
+        level: 2
+    -
+        id: pdf-plus-highlight-opacity
+        title: Highlight opacity
+        type: variable-number-slider
+        min: 0
+        max: 1
+        step: 0.01
+        default: 0.2
+    -
+        id: pdf-plus-highlight-padding-vertical-em
+        title: Highlight padding (top & bottom)
+        description: Boldness of highlights (em)
+        type: variable-number-slider
+        min: 0
+        max: 1
+        step: 0.01
+        default: 0.05
+        format: em
+    -
+        id: pdf-plus-highlight-padding-horizontal-em
+        title: Highlight padding (left & right)
+        description: Boldness of highlights (em)
+        type: variable-number-slider
+        min: 0
+        max: 1
+        step: 0.01
+        default: 0.05
+        format: em
+    -
+        id: pdf-plus-highlight-border-radius
+        title: Highlight edge roundness
+        description: Radius of the highlight edge (em). 0 for sharp edges and 0.5 for rounded edges.
+        type: variable-number-slider
+        min: 0
+        max: 0.5
+        step: 0.01
+        default: 0.1
+        format: em
+    - 
+        id: pdf-rect
+        title: Rectanglular selection
+        type: heading
+        level: 2
+    -
+        id: pdf-plus-rect-highlight-opacity
+        title: Rectangle highlight opacity
+        type: variable-number-slider
+        min: 0
+        max: 1
+        step: 0.01
+        default: 1
+    -
+        id: pdf-plus-rect-highlight-border-width
+        title: Rectangle highlight border width (px)
+        type: variable-number-slider
+        min: 1
+        max: 10
+        step: 1
+        default: 2
+        format: px
+    -
+        id: hover-popover
+        title: Hover popovers
+        type: heading
+        level: 2
+    -
+        id: pdf-plus-backlink-popover
+        title: Backlink popovers
+        description: Styles for popovers displayed when hovering over backlinked highlights or rectangular selections in PDF viewer
+        type: heading
+        level: 3
+    -
+        id: pdf-plus-backlink-popover-width
+        title: Backlink popover width (px)
+        type: variable-number-slider
+        min: 100
+        max: 1000
+        step: 10
+        default: 450
+        format: px
+    -
+        id: pdf-plus-backlink-popover-height
+        title: Backlink popover height (px)
+        type: variable-number-slider
+        min: 100
+        max: 1000
+        step: 10
+        default: 400
+        format: px
+    -
+        id: pdf-plus-pdf-link-like-popover
+        title: PDF internal link popovers
+        description: Styles for popovers displayed when hovering over internal links, outline items or thumbnails in PDF viewer
+        type: heading
+        level: 3
+    -
+        id: pdf-plus-pdf-link-like-popover-width
+        title: PDF internal link popover width (px)
+        type: variable-number-slider
+        min: 100
+        max: 1000
+        step: 10
+        default: 450
+        format: px
+    -
+        id: pdf-plus-pdf-link-like-popover-height
+        title: PDF internal link popover height (px)
+        type: variable-number-slider
+        min: 100
+        max: 1000
+        step: 10
+        default: 400
+        format: px
+    - 
+        id: pdf-toolbar
+        title: PDF toolbars
+        type: heading
+        level: 2
+    - 
+        id: hide-pdf-embed-toolbar
+        title: Hide toolbar in PDF embeds with a page specified
+        type: class-toggle
+        default: true
+    - 
+        id: hide-pdf-toolbar-in-hover-editor
+        title: Hide PDF toolbar in Hover Editor
+        type: class-toggle
+        default: true
+    -
+        id: pdf-sidebar
+        title: PDF sidebars
+        type: heading
+        level: 2
+    -
+        id: pdf-plus-sidebar-width
+        title: Sidebar width (px)
+        type: variable-number-slider
+        min: 100
+        max: 1000
+        step: 10
+        default: 140
+        format: px
+    -
+        id: pdf-plus-vim
+        title: Vim keybindings
+        type: heading
+        level: 2
+    -
+        id: pdf-plus-vim-hin
+        title: Hint mode
+        type: heading
+        level: 3
+    - 
+        id: pdf-plus-vim-hint-inverted
+        title: Inverted color scheme
+        type: class-toggle
+        default: false
+*/
+
+:root {
+    --pdf-plus-highlight-padding-default-em: 0.05em;
+}
+
+.hide-pdf-embed-toolbar .pdf-embed[src*="#"] .pdf-toolbar,
+.hide-pdf-embed-toolbar .popover.hover-popover.hover-editor .pdf-embed[src*="#"] .pdf-toolbar {
+    display: none;
+}
+
+.hide-pdf-toolbar-in-hover-editor .popover.hover-popover.hover-editor .view-content>.pdf-toolbar {
+    display: none !important;
+}
+
+/* When hovering over a highlighted text in PDF viewer, highlight the corresponding item in backlink pane */
+.backlink-pane .search-result-file-match.hovered-backlink,
+.backlink-pane .search-result-file-matches:has(.better-search-views-tree) .better-search-views-file-match.hovered-backlink:not(:hover) {
+    background-color: var(--text-selection);
+}
+
+.setting-item.no-border,
+.pdf-plus-settings.vertical-tab-content .setting-item.no-border {
+    border-top: none;
+
+    &.small-padding {
+        padding-top: 0;
+    }
+}
+
+.setting-item-control input.error {
+    border-color: var(--background-modifier-error);
+}
+
+.setting-item-description.error {
+    color: var(--background-modifier-error);
+}
+
+.is-mobile,
+.is-tablet {
+    .pdf-plus-color-palette .pdf-plus-color-palette-item-inner {
+        width: calc(var(--swatch-width) * 0.85);
+        height: calc(var(--swatch-width) * 0.85);
+    }
+}
+
+.pdf-plus-color-palette {
+    user-select: none;
+    -webkit-user-select: none;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    .pdf-plus-color-palette-item {
+        /* Avoid text selections to be cleared when tapping on a color palette item on the mobile app */
+        /* https://github.com/RyotaUshio/obsidian-pdf-plus/issues/169 */
+        user-select: none;
+
+        .pdf-plus-color-palette-item-inner {
+            width: var(--swatch-width);
+            height: var(--swatch-width);
+            border-radius: 50%;
+            border: var(--input-border-width) solid var(--background-modifier-border);
+        }
+    }
+
+    .pdf-plus-color-palette-status-container {
+        padding: var(--size-2-2) var(--size-2-3);
+        color: var(--text-muted);
+        font-size: var(--font-ui-small);
+        text-wrap: nowrap;
+    }
+}
+
+.menu .menu-item.pdf-plus-color-menu-item {
+    padding-left: 0;
+
+    .pdf-plus-color-indicator {
+        border-radius: 50%;
+        border-width: 0;
+        height: var(--size-4-3);
+        width: var(--size-4-3);
+    }
+}
+
+.pdf-toolbar .clickable-icon.is-disabled {
+    background-color: inherit;
+
+    &>svg {
+        color: var(--text-faint);
+    }
+}
+
+/* .pdf-page-input, */
+.pdf-zoom-level-input {
+    width: 6ch;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.pdf-zoom-level-percent {
+    white-space: nowrap;
+    margin-right: var(--size-4-1);
+    font-size: var(--font-ui-small);
+    font-variant-numeric: tabular-nums;
+}
+
+.pdf-plus-settings.vertical-tab-content {
+    --pdf-plus-settings-header-height: var(--size-4-12);
+
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.pdf-plus-settings.vertical-tab-content .header-container {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: var(--pdf-plus-settings-header-height);
+    line-height: var(--pdf-plus-settings-header-height);
+    text-align: center;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--divider-color);
+    padding: 0 var(--size-4-4);
+
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: nowrap;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .header {
+        line-height: normal;
+
+        .header-title {
+            display: none;
+        }
+    }
+}
+
+.pdf-plus-settings.vertical-tab-content .content {
+    padding-top: var(--size-4-8);
+    padding-bottom: var(--size-4-16);
+    padding-left: var(--size-4-12);
+    padding-right: var(--size-4-12);
+}
+
+.pdf-plus-settings.vertical-tab-content .spacer {
+    height: var(--pdf-plus-settings-header-height);
+}
+
+.pdf-plus-settings.vertical-tab-content .top-note {
+    min-height: var(--pdf-plus-settings-header-height);
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+.pdf-plus-settings .setting-item-description,
+.pdf-plus-modal .setting-item-description {
+    &>p:first-child {
+        margin-top: 0;
+    }
+
+    &>p:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.pdf-plus-settings .ignore-split-setting.setting-item {
+    padding-top: 0;
+}
+
+.annotationLayer .popupContent {
+    &>p:first-child {
+        margin-top: 0;
+    }
+
+    &>p:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.pdf-plus-backlink-highlight-layer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    transform-origin: 0 0;
+    pointer-events: none;
+}
+
+.pdf-plus-backlink-highlight-layer .pdf-plus-backlink {
+    position: absolute;
+    pointer-events: auto;
+}
+
+.pdf-plus-backlink-highlight-layer .pdf-plus-backlink.pdf-plus-backlink-selection {
+    box-sizing: content-box;
+    cursor: text;
+}
+
+.pdf-plus-backlink-highlight-layer .rect-highlight {
+    background-color: rgb(var(--text-highlight-bg-rgb));
+    border-radius: var(--radius-m);
+    opacity: 0.2;
+}
+
+body:not(.pdf-plus-backlink-selection-underline) .pdf-plus-backlink-highlight-layer .pdf-plus-backlink.pdf-plus-backlink-selection {
+    background-color: rgb(from var(--pdf-plus-color) r g b / var(--pdf-plus-highlight-opacity, 0.2));
+    padding: var(--pdf-plus-highlight-padding-vertical-em, var(--pdf-plus-highlight-padding-default-em)) var(--pdf-plus-highlight-padding-horizontal-em, var(--pdf-plus-highlight-padding-default-em));
+    margin: calc(var(--pdf-plus-highlight-padding-vertical-em, var(--pdf-plus-highlight-padding-default-em)) * -1) calc(var(--pdf-plus-highlight-padding-horizontal-em, var(--pdf-plus-highlight-padding-default-em)) * -1);
+    border-radius: var(--pdf-plus-highlight-border-radius, 0.1em);
+}
+
+body.pdf-plus-backlink-selection-underline {
+    .pdf-plus-backlink-highlight-layer .pdf-plus-backlink.pdf-plus-backlink-selection {
+        padding: 0;
+        margin: 0;
+        opacity: 1.0;
+        border-radius: 0;
+    }
+
+    .pdf-plus-backlink-highlight-layer[data-main-rotation="0"] .pdf-plus-backlink.pdf-plus-backlink-selection {
+        border-bottom: 0.1em solid var(--pdf-plus-color);
+    }
+
+    .pdf-plus-backlink-highlight-layer[data-main-rotation="90"] .pdf-plus-backlink.pdf-plus-backlink-selection {
+        border-right: 0.1em solid var(--pdf-plus-color);
+    }
+
+    .pdf-plus-backlink-highlight-layer[data-main-rotation="180"] .pdf-plus-backlink.pdf-plus-backlink-selection {
+        border-top: 0.1em solid var(--pdf-plus-color);
+    }
+
+    .pdf-plus-backlink-highlight-layer[data-main-rotation="270"] .pdf-plus-backlink.pdf-plus-backlink-selection {
+        border-left: 0.1em solid var(--pdf-plus-color);
+    }
+}
+
+.pdf-plus-backlink-highlight-layer .pdf-plus-backlink.pdf-plus-backlink-fit-r {
+    border: dashed rgb(from var(--pdf-plus-rect-color) r g b / var(--pdf-plus-rect-highlight-opacity, 1)) var(--pdf-plus-rect-highlight-border-width, 2px);
+}
+
+.pdf-plus-backlink-icon {
+    position: absolute;
+    --icon-size: 100%;
+}
+
+[data-main-rotation="90"] .pdf-plus-backlink-icon {
+    transform: rotate(270deg);
+}
+
+[data-main-rotation="180"] .pdf-plus-backlink-icon {
+    transform: rotate(180deg);
+}
+
+[data-main-rotation="270"] .pdf-plus-backlink-icon {
+    transform: rotate(90deg);
+}
+
+.pdf-plus-annotation-edit-modal {
+    .desc {
+        margin-bottom: var(--size-4-4);
+    }
+
+    .preview-container {
+        background: var(--background-modifier-form-field);
+        border: var(--input-border-width) solid var(--background-modifier-border);
+        border-radius: var(--input-radius);
+        padding: var(--size-4-1) var(--size-4-2);
+        text-align: left;
+
+        &>p:first-child {
+            margin-top: 0;
+        }
+
+        &>p:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    /* Arrange two children of .setting-item, namely .setting-item-info and .setting-item-contrl, vertically */
+    .setting-item:last-child:has(textarea) {
+        display: flex;
+        flex-direction: column;
+        justify-content: left;
+        align-items: flex-start;
+
+        .setting-item-control {
+            width: 100%;
+            padding-top: var(--size-4-2);
+        }
+    }
+
+    .pdf-plus-annotation-edit-modal-save-instructions {
+        color: var(--text-muted);
+        font-size: calc(var(--font-text-size) * 0.65);
+        text-align: end;
+    }
+}
+
+.popupWrapper {
+    --pdf-popup-width: 310px;
+}
+
+.pdf-plus-annotation-icon-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    margin-right: calc(var(--size-4-1) * -1);
+    margin-left: calc(var(--size-2-1) * -1);
+
+    .clickable-icon {
+        margin-right: 0;
+        margin-left: 0;
+    }
+}
+
+.pdf-plus-draggable .popup {
+    cursor: default;
+}
+
+#pdf-plus-funding {
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: flex-end;
+
+    .setting-item-control {
+        padding-top: var(--size-4-4);
+    }
+}
+
+#pdf-plus-funding-icon-info-container {
+    display: flex;
+    flex-direction: row;
+    /* justify-content: left; */
+    align-items: center;
+}
+
+#pdf-plus-funding-icon {
+    margin-right: var(--size-4-4);
+}
+
+.page-label-range:first-of-type {
+    margin-top: var(--size-4-4);
+}
+
+.page-label-range:not(:first-of-type) {
+    margin-top: var(--size-4-9);
+}
+
+.pdf-plus-page-label-modal {
+    z-index: var(--he-popover-layer-inactive, var(--layer-popover));
+
+    .page-labels-loading {
+        color: var(--text-muted);
+        text-align: center;
+        margin: var(--size-4-4);
+    }
+}
+
+.pdf-plus-restore-default-modal {
+    user-select: text;
+}
+
+.pdf-content-container {
+    --sidebar-width: var(--pdf-plus-sidebar-width, 140px);
+}
+
+body {
+    --container-pdf-cropped-width: var(--line-width);
+    --container-pdf-cropped-max-width: var(--max-width);
+}
+
+.internal-embed.pdf-cropped-embed {
+    width: var(--container-pdf-cropped-width);
+    max-width: var(--container-pdf-cropped-max-width);
+
+    img {
+        cursor: text !important;
+        max-width: 100%;
+    }
+}
+
+.popover.hover-popover>.pdf-cropped-embed img {
+    max-height: 100%;
+    max-width: 100%;
+    height: auto;
+}
+
+.pdf-plus-selecting * {
+    cursor: crosshair !important;
+
+    .textLayer {
+        user-select: none;
+    }
+}
+
+.pdf-container .pdf-plus-select-box {
+    position: absolute;
+    z-index: 1000;
+    border: dashed var(--background-modifier-border) 2px;
+    background-color: hsla(var(--interactive-accent-hsl), 0.15);
+}
+
+/* From Obsidian's app.css (.annotationLayer .mod-focused /  .annotationLayer .boundingRect)*/
+.pdf-plus-annotation-bounding-rect {
+    background-color: rgba(var(--text-highlight-bg-rgb), 0.1);
+    border-radius: var(--radius-s);
+    box-shadow: var(--shadow-s);
+    box-sizing: content-box;
+    margin: calc(var(--size-4-2) * -1);
+    border: var(--size-4-1) solid rgba(var(--text-highlight-bg-rgb), 0.8);
+    padding: var(--size-4-1);
+    z-index: 0;
+    /* Avoid preventing annotation click */
+    position: absolute;
+    pointer-events: none;
+}
+
+.popover.hover-popover.pdf-plus-backlink-popover {
+    --popover-width: var(--pdf-plus-backlink-popover-width, 450px);
+    --popover-height: var(--pdf-plus-backlink-popover-height, 400px);
+}
+
+.popover.hover-popover.pdf-plus-pdf-link-like-popover {
+    --popover-pdf-width: var(--pdf-plus-pdf-link-like-popover-width, 450px);
+    --popover-pdf-height: var(--pdf-plus-pdf-link-like-popover-height, 400px);
+}
+
+.popover.hover-popover.pdf-plus-bib-popover {
+    --popover-width: 400px;
+    --pdf-plus-bib-metadata-font-size: var(--font-ui-small);
+
+    /* Workaround to prevent bib popovers from being covered by Hover Editor
+    when the bib popover is spawned from a hover editor
+    (https://github.com/RyotaUshio/obsidian-pdf-plus/issues/459).
+    Hover Editor decides z-index based on --layer-slides, so we need to set a higher z-index. */
+    z-index: calc(var(--layer-slides) + 1);
+
+    .pdf-plus-bib {
+        padding: var(--size-4-3);
+        font-size: var(--font-ui-medium);
+
+        /* Make text inside citation hover selectable (https://github.com/RyotaUshio/obsidian-pdf-plus/issues/252) */
+        -moz-user-select: text;
+        -webkit-user-select: text;
+        user-select: text;
+
+        .bib-title {
+            font-weight: bold;
+            padding-bottom: var(--size-4-2);
+        }
+
+        .bib-author-year {
+            color: var(--text-muted);
+            text-align: left;
+            font-size: var(--pdf-plus-bib-metadata-font-size);
+        }
+
+        .bib-container-title {
+            color: var(--text-muted);
+            font-style: italic;
+            text-align: left;
+            font-size: var(--pdf-plus-bib-metadata-font-size);
+        }
+
+        .button-container {
+            margin-top: 1em;
+            display: flex;
+            justify-content: space-between;
+            gap: var(--size-4-2);
+            flex-wrap: wrap;
+        }
+    }
+}
+
+.pdf-plus-vim-command {
+    border-top: 1px solid var(--background-modifier-border);
+    /* height: var(--size-4-8); */
+    font-family: monospace;
+
+    input {
+        background: transparent;
+        border: none;
+        outline: none;
+        font-family: monospace;
+        white-space: pre;
+        width: 90%;
+    }
+}
+
+.page.pdf-plus-vim-hint-mode [data-pdf-plus-vim-hint]::after {
+    content: attr(data-pdf-plus-vim-hint);
+    color: var(--pdf-plus-vim-hint-color);
+    text-transform: uppercase;
+    font-size: var(--font-ui-medium);
+    font-weight: bold;
+    background-color: var(--pdf-plus-vim-hint-background-color);
+    border: var(--size-2-1) solid hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+    border-radius: 10%;
+    padding: 0 var(--size-2-2);
+    position: relative;
+    left: 0;
+    top: 0;
+    z-index: 9999;
+}
+
+body {
+    --pdf-plus-vim-hint-color: var(--text-normal);
+    --pdf-plus-vim-hint-background-color: var(--background-primary);
+}
+
+body.pdf-plus-vim-hint-inverted {
+    --pdf-plus-vim-hint-color: var(--text-on-accent);
+    --pdf-plus-vim-hint-background-color: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+}
+
+/* Margin AI sidebar. Kept separate from upstream PDF++ selectors. */
+.margin-ai-view {
+	--margin-ai-gap: 12px;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+	padding: 0;
+}
+
+.margin-ai-header { align-items: center; border-bottom: 1px solid var(--background-modifier-border); display: flex; flex: 0 0 auto; gap: 6px; min-height: 42px; padding: 6px 10px; }
+.margin-ai-spacer { flex: 1; }
+.margin-ai-account-menu { position: relative; }
+.margin-ai-account-menu summary { cursor: pointer; display: flex; list-style: none; padding: 5px; }
+.margin-ai-account-panel { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); box-shadow: var(--shadow-s); display: grid; gap: 8px; padding: 10px; position: absolute; right: 0; top: 32px; width: 220px; z-index: var(--layer-popover); }
+.margin-ai-source-summary { border-bottom: 1px solid var(--background-modifier-border); flex: 0 0 auto; padding: 12px; }
+.margin-ai-source-summary blockquote, .margin-ai-highlight-card blockquote, .margin-ai-pinned-source blockquote { margin: 6px 0; max-height: 96px; overflow: hidden; white-space: pre-wrap; }
+.margin-ai-highlight-list { flex: 1 1 auto; overflow-y: auto; }
+.margin-ai-highlight-card { background: transparent; border-bottom: 1px solid var(--background-modifier-border); border-radius: 0; box-shadow: none; display: block; height: auto; padding: 12px; text-align: start; width: 100%; }
+.margin-ai-highlight-card:hover { background: var(--background-modifier-hover); }
+.margin-ai-highlight-card:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.margin-ai-pinned-source { background: var(--background-secondary); border-radius: 0; box-shadow: none; flex: 0 0 auto; height: auto; padding: 10px 12px; text-align: start; width: 100%; }
+.margin-ai-messages { flex: 1 1 auto; overflow-y: auto; padding: 8px 12px; }
+.margin-ai-composer-shell { background: var(--background-primary); flex: 0 0 auto; padding: 8px 10px 10px; }
+.margin-ai-composer-card { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l, 12px); box-shadow: var(--shadow-s); min-width: 0; overflow: hidden; padding: 7px 8px; }
+.margin-ai-composer-actions { align-items: center; display: flex; justify-content: space-between; }
+.margin-ai-suggestion { font-size: var(--font-ui-smaller); margin: 5px 4px 2px 0; padding: 2px 6px; }
+.margin-ai-scope { margin-bottom: 6px; }
+.margin-ai-scope select { width: 100%; }
+.margin-ai-scope-warning { color: var(--text-error); font-size: var(--font-ui-smaller); margin-top: 4px; }
+.margin-ai-empty { color: var(--text-muted); padding: 18px 12px; text-align: center; }
+.margin-ai-annotate-selection { flex: 0 0 auto; margin: 8px 10px 10px; }
+.margin-ai-header > button.is-active { background: var(--background-modifier-hover); color: var(--text-accent); }
+.margin-ai-source-highlight { background: color-mix(in srgb, var(--color-yellow) 32%, transparent); border-radius: 2px; cursor: pointer; }
+.margin-ai-selection-toolbar { align-items: center; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); box-shadow: var(--shadow-s); display: flex; gap: 2px; padding: 3px; position: fixed; z-index: var(--layer-popover); }
+.margin-ai-selection-toolbar button { align-items: center; display: flex; gap: 4px; padding: 4px 7px; }
+.margin-ai-selection-toolbar svg { height: 14px; width: 14px; }
+
+.margin-ai-header h2,
+.margin-ai-section h3 {
+	margin: 0 0 6px;
+}
+
+.margin-ai-section {
+	border-top: 1px solid var(--background-modifier-border);
+	padding: 14px 0;
+}
+
+.margin-ai-muted {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.margin-ai-source-path {
+	font-weight: var(--font-semibold);
+	overflow-wrap: anywhere;
+}
+
+.margin-ai-capture blockquote {
+	background: var(--background-secondary);
+	border-inline-start: 3px solid var(--interactive-accent);
+	margin: 10px 0;
+	max-height: 150px;
+	overflow: auto;
+	padding: 8px 10px;
+	white-space: pre-wrap;
+}
+
+.margin-ai-actions,
+.margin-ai-conversation-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.margin-ai-conversation-title h3 {
+	margin-inline-end: auto;
+}
+
+.margin-ai-connected {
+	color: var(--color-green);
+	font-weight: var(--font-semibold);
+}
+
+.margin-ai-account select,
+.margin-ai-composer {
+	box-sizing: border-box;
+	margin: 8px 0;
+	width: 100%;
+}
+
+.margin-ai-composer {
+	font-family: var(--font-interface);
+	font-size: var(--font-ui-medium);
+	letter-spacing: normal;
+	line-height: 1.5;
+	min-height: clamp(92px, 17vh, 124px);
+	resize: none;
+	word-spacing: normal;
+}
+
+.margin-ai-attached-notes { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.margin-ai-note-chip { align-items: center; background: var(--background-modifier-hover); border-radius: 999px; display: inline-flex; font-size: var(--font-ui-smaller); gap: 2px; max-width: 100%; padding: 2px 4px 2px 8px; }
+.margin-ai-note-chip > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.margin-ai-note-chip button { flex: 0 0 auto; }
+.margin-ai-export-field { align-items: stretch; flex-direction: column; }
+.margin-ai-export-field .setting-item-control, .margin-ai-export-field input { max-width: none; width: 100%; }
+
+.margin-ai-annotation-item {
+	align-items: flex-start;
+	background: transparent;
+	box-shadow: none;
+	display: flex;
+	flex-direction: column;
+	height: auto;
+	margin: 2px 0;
+	max-width: 100%;
+	padding: 7px 8px;
+	text-align: start;
+	width: 100%;
+}
+
+.margin-ai-annotation-item span {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.margin-ai-annotation-item.is-active {
+	background: var(--background-modifier-hover);
+}
+
+.margin-ai-message {
+	border-radius: var(--radius-s);
+	margin: 10px 0;
+	padding: 9px 10px;
+}
+
+.margin-ai-message-user {
+	background: var(--background-secondary);
+}
+
+.margin-ai-message-assistant {
+	border: 1px solid var(--background-modifier-border);
+}
+
+.margin-ai-message-meta {
+	display: flex;
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	gap: 8px;
+	margin-bottom: 6px;
+}
+
+.margin-ai-message-body > :first-child {
+	margin-top: 0;
+}
+
+.margin-ai-message-body > :last-child {
+	margin-bottom: 0;
+}
+
+.margin-ai-status-error,
+.margin-ai-status-interrupted {
+	color: var(--text-error);
+}
+
+.margin-ai-status-pending {
+	color: var(--text-accent);
+}
+
+.margin-ai-auth-stage {
+	color: var(--text-accent);
+	font-size: var(--font-ui-small);
+	margin: 6px 0;
+}
+
+.margin-ai-auth-error {
+	background: rgba(var(--color-red-rgb), 0.1);
+	border: 1px solid rgba(var(--color-red-rgb), 0.35);
+	border-radius: var(--radius-s);
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	margin: 8px 0;
+	padding: 8px;
+}
+
+.margin-ai-auth-error strong,
+.margin-ai-auth-error small {
+	display: block;
+}
+
+/* V2 document index: quiet, separated cards, with the action pinned below. */
+.margin-ai-highlight-list { padding: 12px; }
+.margin-ai-list-heading { color: var(--text-muted); font-size: var(--font-ui-smaller); margin: 2px 0 10px; }
+.margin-ai-highlight-card { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m, 8px); margin: 0 0 10px; padding: 12px; }
+.margin-ai-highlight-card blockquote { border-inline-start: 3px solid var(--color-yellow, #c4a747); margin: 0 0 10px; padding-inline-start: 10px; }
+.margin-ai-highlight-card .margin-ai-muted { font-size: var(--font-ui-smaller); }
+.margin-ai-context-pending { color: var(--text-muted); font-size: var(--font-ui-smaller); margin-top: 4px; }
+.margin-ai-composer-shell { overflow-wrap: anywhere; margin-top: auto; }
+.margin-ai-composer-actions select { max-width: 58%; }
+::highlight(margin-ai-source-highlight) { background-color: #e8ce6680; }
+.margin-ai-header { flex-wrap: wrap; }
+.margin-ai-account-menu { flex-shrink: 0; }
+.margin-ai-connection-prompt { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-s); margin: 8px 0; padding: 8px; }
+.margin-ai-connection-prompt button { margin-top: 6px; }
+
+.margin-ai-auth-error small {
+	color: var(--text-muted);
+	margin-top: 5px;
+}
+
+/* Margin AI compact conversation layout. */
+.margin-ai-view { --margin-ai-pad: var(--size-4-3, 12px); box-sizing: border-box; container-name: margin-ai-sidebar; container-type: inline-size; min-width: 0; }
+.margin-ai-header { flex-wrap: nowrap; gap: 4px; min-height: 36px; padding: 4px 8px; }
+.margin-ai-header > strong { margin-inline-end: 2px; }
+.margin-ai-header > button { font-size: var(--font-ui-smaller); padding: 3px 7px; }
+.margin-ai-account-panel { max-width: calc(100vw - 20px); }
+.margin-ai-source-summary { min-width: 0; padding: 8px var(--margin-ai-pad); }
+.margin-ai-source-summary strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.margin-ai-pinned-source { background: var(--background-secondary); border: 0; border-bottom: 1px solid var(--background-modifier-border); border-radius: 0; box-sizing: border-box; color: var(--text-normal); flex: 0 0 auto; height: auto; min-width: 0; padding: 5px var(--margin-ai-pad); text-align: start; width: 100%; }
+.margin-ai-pinned-source > summary { align-items: center; cursor: pointer; display: flex; gap: 6px; list-style: none; min-width: 0; }
+.margin-ai-pinned-source > summary::-webkit-details-marker { display: none; }
+.margin-ai-pinned-source > summary::before { color: var(--text-muted); content: '\25B8'; flex: 0 0 auto; }
+.margin-ai-pinned-source[open] > summary::before { content: '\25BE'; }
+.margin-ai-source-name { flex: 1; font-size: var(--font-ui-small); font-weight: var(--font-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.margin-ai-pinned-source blockquote { border-inline-start: 2px solid var(--interactive-accent); margin: 6px 0 3px; max-height: 112px; overflow: auto; padding: 4px 8px; user-select: text; white-space: pre-wrap; }
+.margin-ai-messages { min-height: 0; padding: 4px var(--margin-ai-pad); }
+.margin-ai-message { margin: 6px 0; max-width: 100%; overflow-wrap: anywhere; padding: 7px 8px; user-select: text; }
+.margin-ai-message-meta { align-items: center; }
+.margin-ai-message-meta > span:first-child { flex: 1; }
+.margin-ai-message-meta .clickable-icon { margin: -4px -4px -4px 0; }
+.margin-ai-copy-status { color: var(--text-muted); font-weight: var(--font-normal); }
+.margin-ai-message-body { min-width: 0; overflow-x: auto; user-select: text; }
+.margin-ai-message-streaming { white-space: pre-wrap; }
+.margin-ai-generation-indicator { animation: margin-ai-generation-pulse 1.2s ease-in-out infinite; background: currentColor; border-radius: 50%; color: var(--text-muted); display: inline-block; height: 5px; margin: 2px 0 2px 9px; opacity: .45; vertical-align: middle; width: 5px; }
+@keyframes margin-ai-generation-pulse { 50% { opacity: 1; transform: scale(1.35); } }
+@media (prefers-reduced-motion: reduce) { .margin-ai-generation-indicator { animation: none; opacity: .7; } }
+.margin-ai-message-body pre { max-width: 100%; overflow-x: auto; }
+.margin-ai-composer-shell { max-height: min(62vh, 520px); overflow-y: auto; padding: 6px 8px 8px; }
+.margin-ai-composer-card .margin-ai-composer { background: transparent; border: 0; box-shadow: none; margin: 4px 0; padding: 6px 4px; width: 100%; }
+.margin-ai-composer-card .margin-ai-composer:focus { box-shadow: none; }
+.margin-ai-composer-actions { gap: 6px; min-width: 0; }
+.margin-ai-local-actions { align-items: center; display: flex; flex: 0 0 auto; gap: 2px; }
+.margin-ai-ai-actions { align-items: center; display: flex; flex: 1; justify-content: flex-end; min-width: 0; }
+.margin-ai-ai-actions select { border-end-end-radius: 0; border-start-end-radius: 0; flex: 1; max-width: 180px; min-width: 0; }
+.margin-ai-ai-actions button { border-end-start-radius: 0; border-start-start-radius: 0; flex: 0 0 auto; }
+.margin-ai-comment-action { background: transparent; color: var(--text-muted); flex: 0 0 auto; }
+.margin-ai-disclosure { color: var(--text-muted); font-size: var(--font-ui-smaller); margin: 2px 0; }
+.margin-ai-disclosure > summary { cursor: pointer; padding: 2px 0; }
+.margin-ai-disclosure-content { border-inline-start: 1px solid var(--background-modifier-border); margin: 3px 0 5px 4px; padding: 3px 0 3px 8px; }
+.margin-ai-disclosure-content select { box-sizing: border-box; max-width: 100%; width: 100%; }
+.margin-ai-suggestion-list { padding-bottom: 3px; }
+.margin-ai-sharing-note, .margin-ai-context-notice { color: var(--text-muted); font-size: var(--font-ui-smaller); margin-top: 6px; }
+.margin-ai-highlight-list { padding: 8px var(--margin-ai-pad); }
+.margin-ai-highlight-card { max-width: 100%; }
+
+@container margin-ai-sidebar (max-width: 360px) {
+	.margin-ai-view { --margin-ai-pad: 8px; }
+	.margin-ai-header { padding-inline: 5px; }
+	.margin-ai-header > strong { font-size: var(--font-ui-small); }
+	.margin-ai-header > button { font-size: var(--font-ui-smaller); padding-inline: 5px; }
+	.margin-ai-composer-actions { align-items: center; }
+	.margin-ai-local-actions { min-width: 0; }
+	.margin-ai-comment-action { max-width: 74px; overflow: hidden; text-overflow: ellipsis; }
+	.margin-ai-ai-actions { flex: 1 1 0; max-width: 60%; width: auto; }
+	.margin-ai-ai-actions select { max-width: 100%; min-width: 0; }
+}
+
+@container margin-ai-sidebar (max-width: 280px) {
+	.margin-ai-header > strong { display: none; }
+	.margin-ai-header > button { padding-inline: 4px; }
+}
+
+@media (max-height: 520px) {
+	.margin-ai-composer-shell { max-height: 58vh; }
+	.margin-ai-composer { min-height: 84px; }
+	.margin-ai-pinned-source blockquote { max-height: 64px; }
+	.margin-ai-message { margin-block: 4px; }
+}

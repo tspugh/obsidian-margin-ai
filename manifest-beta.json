@@ -1,0 +1,14 @@
+{
+    "id": "margin-ai",
+    "name": "Margin AI",
+    "version": "0.2.0",
+    "minAppVersion": "1.5.8",
+    "description": "Quiet local annotations and ChatGPT conversations for Markdown and PDF documents. Forked from PDF++.",
+    "author": "tspugh; based on PDF++ by Ryota Ushio",
+    "fundingUrl": {
+        "GitHub Sponsor": "https://github.com/sponsors/RyotaUshio",
+        "Buy Me a Coffee": "https://www.buymeacoffee.com/ryotaushio",
+        "Ko-fi": "https://ko-fi.com/ryotaushio"
+    },
+    "isDesktopOnly": true
+}
